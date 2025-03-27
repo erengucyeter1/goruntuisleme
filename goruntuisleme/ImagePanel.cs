@@ -1,27 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace goruntuisleme
 {
-    internal class ImagePanel : System.Windows.Forms.Panel
+    internal class ImagePanel : ResizablePanel
     {
         System.Windows.Forms.PictureBox pictureBox;
         System.Windows.Forms.ComboBox filterComboBox;
 
         private IImageObserver observer;
 
-        Bitmap image;
+        List<object> TempComponents = new List<object>();
 
-        public ImagePanel(int x, int y, Bitmap mainImage)
+        Bitmap image;
+        int imgSize;
+
+        public int Number { get; set; } = 0;
+
+        public ImagePanel(Bitmap mainImage) : base()
         {
             this.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.Location = new System.Drawing.Point(x, y);
-            this.Size = new System.Drawing.Size(270, 300);
             fillPanel();
 
             this.image = mainImage;
@@ -31,9 +31,18 @@ namespace goruntuisleme
                 setImage(this.image);
             }
 
+
             this.pictureBox.Click += (sender, e) => openImage();
+            this.tempSizeChanged += (sender, e) => updateComponents((ResizeEventArgs)e);
         }
 
+        private void updateComponents(ResizeEventArgs e)
+        {
+            if (base.isResizing)
+            {
+                observer.OnPanelResized(e.Width, e.Height);
+            }
+        }
         private void openImage()
         {
             FileDialog fileDialog = new OpenFileDialog();
@@ -50,18 +59,19 @@ namespace goruntuisleme
         {
             pictureBox = new System.Windows.Forms.PictureBox();
             pictureBox.Location = new System.Drawing.Point(7, 7);
-            pictureBox.Size = new System.Drawing.Size(256, 256);
             pictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+
+           
             this.Controls.Add(pictureBox);
 
             filterComboBox = new System.Windows.Forms.ComboBox();
-            filterComboBox.Location = new System.Drawing.Point(7, 270);
-            filterComboBox.Size = new System.Drawing.Size(256, 21);
-            filterComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList; // Bu satırı ekleyin
+            filterComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 
-            filterComboBox.Items.AddRange(new string[] { "None", "Gray", "Negative", "Sepia" });
+            filterComboBox.Items.AddRange(new string[] { "None", "Gray", "Negative", "Sepia", "meangray", "binarize", "rotate"});
             filterComboBox.SelectedIndex = 0;
             filterComboBox.SelectedIndexChanged += (sender, e) => applyFilter();
+          
+            
             this.Controls.Add(filterComboBox);
 
 
@@ -82,10 +92,64 @@ namespace goruntuisleme
                 case 3:
                     filtered = ImageFilters.Sepia(filtered);
                     break;
+                case 4:
+                    filtered = ImageFilters.MaenGrayscale(filtered);
+                    break;
+                case 5:
+                    filtered = ImageFilters.Binarize(filtered);
+                    break;
+                case 6:
+                    SetComboBoxForRotate();
 
+                    break;
+
+            }
+            
+            if (filterComboBox.SelectedIndex != 6)
+            {
+                DeleteTepmsFromControls();
             }
 
             pictureBox.Image = filtered;
+
+        }
+
+
+        private void SetComboBoxForRotate()
+        {
+            filterComboBox.Size = new System.Drawing.Size(imgSize / 2, 21);
+
+            NumericUpDown numericUpDown = new NumericUpDown();
+            numericUpDown.Location = new System.Drawing.Point(((imgSize / 2) +27), imgSize + 14);
+            numericUpDown.Size = new System.Drawing.Size(40, 21);
+            numericUpDown.Maximum = 360;
+            numericUpDown.Minimum = 0;
+            numericUpDown.Value = 0;
+            TempComponents.Add(numericUpDown);
+            this.Controls.Add(numericUpDown);
+
+            Button button = new Button();
+            button.Location = new System.Drawing.Point(((imgSize / 2) + 70), imgSize + 14);
+            button.Size = new System.Drawing.Size(40, 21);
+            button.Text = "Apply";
+            button.Click += (sender, e) =>
+            {
+                int angle = (int)numericUpDown.Value;
+                Bitmap rotated = ImageFilters.RotateImage(image, angle);
+                pictureBox.Image = rotated;
+            };
+            TempComponents.Add(button);
+            this.Controls.Add(button);
+        }
+
+        private void DeleteTepmsFromControls()
+        {
+            foreach (var item in TempComponents)
+            {
+                this.Controls.Remove((Control)item);
+            }
+            TempComponents.Clear();
+            filterComboBox.Size = new System.Drawing.Size(imgSize, 21);
 
         }
 
@@ -101,6 +165,19 @@ namespace goruntuisleme
         {
             this.observer = observer;
         }
+
+        public void UpdateSize(int[] location, int imgSize)
+        {
+            this.imgSize = imgSize;
+            this.Location = new System.Drawing.Point(location[0], location[1]);
+            pictureBox.Size = new System.Drawing.Size(imgSize, imgSize);
+            filterComboBox.Location = new System.Drawing.Point(7, imgSize  + 14);
+            filterComboBox.Size = new System.Drawing.Size(imgSize, 21);
+            this.Size = new System.Drawing.Size(imgSize + 14, imgSize + 44);
+
+        }
+
+        
 
     }
 }

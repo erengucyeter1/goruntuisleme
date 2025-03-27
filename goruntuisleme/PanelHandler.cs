@@ -12,15 +12,14 @@ namespace goruntuisleme
     {
         Panel mainPanel;
 
-        Button btnAddPanel;
-
         private byte columnSize{ get;} = 3;
         private byte rowSize { get;} = 2;
 
-        private byte maxPanelCount { get; set; }
+        private byte maxPanelCount { get => ((byte)(columnSize * rowSize)); }
 
         private List<ImagePanel> panels = new List<ImagePanel>();
 
+        private int[] sizeList = { 800,600, 375, 375, 375, 375 };
 
         Bitmap mainImage;
 
@@ -35,47 +34,76 @@ namespace goruntuisleme
 
         }
 
+        public void  OnPanelResized( int Width, int Height)
+        {
+            
+
+
+            int size = ((Width + Height) / 2);
+            if (panels.Count < maxPanelCount && size < sizeList[panels.Count])
+            {
+                AddPanel();
+
+            }
+            else if(size > sizeList[panels.Count - 1])
+            {
+                if (panels.Count > 1)
+                {
+                    panels[panels.Count - 1].Dispose();
+                    panels.RemoveAt(panels.Count - 1);
+                    updatePanels();
+                }
+            }
+        }
+
+
 
         public PanelHandler(System.Windows.Forms.Panel mainPanel)
         {
-            maxPanelCount = (byte)(columnSize * rowSize);
 
             this.mainPanel = mainPanel;
-            this.btnAddPanel = new System.Windows.Forms.Button();
-            this.btnAddPanel.Size = new System.Drawing.Size(270, 300);
-            this.btnAddPanel.Text = "+";
-            this.btnAddPanel.Font = new System.Drawing.Font("Microsoft Sans Serif",50);
-            this.btnAddPanel.BackColor = System.Drawing.Color.WhiteSmoke;
-            this.btnAddPanel.Click += (sender, e) => AddPanel();
-            this.mainPanel.Controls.Add(btnAddPanel);
-
+            mainPanel.DoubleClick += (sender, e) => AddPanel();
             AddPanel();
 
         }
 
 
+        private void updatePanels()
+        {
+            int imageSize = sizeList[panels.Count- 1];
+            foreach (ImagePanel panel in panels)
+            {
+                panel.UpdateSize(getLocation(panel.Number, imageSize), imageSize);
+                panel.resizeMargin = (panel.Width + panel.Height) / 3;
+
+            }
+
+
+        }
+
         private void newPanel()
         {
-            int[] location = getLocation();
-            ImagePanel panel = new ImagePanel(location[0], location[1], mainImage);
+            ImagePanel panel = new ImagePanel(mainImage);
+            panel.Number = panels.Count;
             panel.AddObserver(this);
             panels.Add(panel);
+            updatePanels();
             mainPanel.Controls.Add(panel);
 
         }
 
-        private void moveButton()
+        
+        private int[] getLocation(int number, int imgSize)
         {
-            int[] location = getLocation();
-            btnAddPanel.Location = new System.Drawing.Point(location[0], location[1]);
+            byte x = (byte)(number % columnSize);
+            byte y = (byte)(number / columnSize);
+            if(number > 2)
+            {
+                y = 1;
+                x = (byte)(number - 3);
 
-        }
-        private int[] getLocation()
-        {
-            byte x = (byte)(this.panels.Count % columnSize);
-            byte y = (byte)(this.panels.Count / columnSize);
-
-            return new int[] { 12 + (x * 282), 12 + (y * 312) };
+            }
+            return new int[] { 12 + (x * (imgSize + 26)), 12 + (y * (imgSize + 56)) };
         }
 
         public void AddPanel()
@@ -86,16 +114,6 @@ namespace goruntuisleme
             {
                 newPanel();
             }
-            if (this.panels.Count < maxPanelCount)
-            {
-                moveButton();
-            }
-            else
-            {
-                btnAddPanel.Enabled = false;
-                btnAddPanel.Visible = false;
-            }
-
 
         }
 

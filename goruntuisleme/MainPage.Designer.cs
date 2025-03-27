@@ -1,6 +1,6 @@
 ﻿namespace goruntuisleme
 {
-    partial class Form1
+    partial class MainPage
     {
         /// <summary>
         /// Required designer variable.
@@ -36,7 +36,7 @@
             this.mainPanel.BackColor = System.Drawing.SystemColors.ControlDark;
             this.mainPanel.Location = new System.Drawing.Point(12, 12);
             this.mainPanel.Name = "mainPanel";
-            this.mainPanel.Size = new System.Drawing.Size(1920, 1080);
+            this.mainPanel.Size = new System.Drawing.Size(1700, 1080);
             this.mainPanel.TabIndex = 0;
             // 
             // Form1
@@ -44,10 +44,9 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.ClientSize = new System.Drawing.Size(1902, 1033);
+            this.ClientSize = new System.Drawing.Size(1920, 1033);
             this.Controls.Add(this.mainPanel);
-            this.Name = "Form1";
-            this.Text = "Form1";
+            this.Name = "MainPage";
             this.ResumeLayout(false);
 
         }
